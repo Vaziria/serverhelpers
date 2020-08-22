@@ -34,4 +34,4 @@ workflows:
       - build:
           filters:
             branches:
-              only: elastic
+              only: master
