@@ -1,0 +1,37 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    environment:
+      IMAGE_NAME: kampretcode/serverhelpers
+    working_directory: ~/app
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-server-{{ checksum "Dockerfile" }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: "Pull Submodule"
+          command: |
+            git submodule init
+            git submodule update --remote
+
+      - setup_remote_docker
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t $IMAGE_NAME:latest .
+      - run:
+          name: Push Docker Image
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push $IMAGE_NAME:latest
+workflows:
+  version: 2
+  build-elastic:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: elastic
